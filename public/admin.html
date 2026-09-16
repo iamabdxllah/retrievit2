@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RetrieVIT Admin Moderation Portal">
+  <title>Admin Moderation - RetrieVIT</title>
+  <script>
+    (function(){try{var t=localStorage.getItem('retrievit_theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add(t);}catch(e){}})();
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .admin-hero {
+      margin-bottom: var(--space-8);
+      background: var(--bg-card);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--glow-card);
+    }
+    .admin-hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ef4444, #3b82f6, #6366f1);
+    }
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      margin-bottom: var(--space-3);
+    }
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+    .admin-stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      box-shadow: var(--glow-card);
+    }
+    .admin-stat-num {
+      font-size: var(--text-3xl);
+      font-weight: 800;
+      font-family: var(--font-heading);
+      color: var(--text-primary);
+    }
+    .admin-stat-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .admin-tabs {
+      display: flex;
+      gap: var(--space-2);
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: var(--space-6);
+    }
+    .admin-tab-btn {
+      padding: var(--space-3) var(--space-5);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+    .admin-tab-btn:hover {
+      color: var(--text-primary);
+    }
+    .admin-tab-btn.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+    .admin-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--glow-card);
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      text-align: left;
+    }
+    .admin-table th {
+      background: var(--bg-secondary);
+      padding: var(--space-4);
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .admin-table td {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    .admin-table tr:last-child td {
+      border-bottom: none;
+    }
+    .admin-table tr:hover td {
+      background: var(--bg-tertiary);
+    }
+    .report-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+    .thumb-placeholder {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+    }
+    .btn-delete-report {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      white-space: nowrap;
+    }
+    .btn-delete-report:hover {
+      background: var(--danger);
+      color: #ffffff;
+      border-color: var(--danger);
+    }
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: var(--space-4);
+    }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-neon);
+      border-radius: var(--radius-xl);
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow-2xl), var(--glow-card);
+      padding: var(--space-6);
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="find-items.html" class="nav-brand">Retrie<span style="color: #3b82f6;">VIT</span></a>
+
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="find-items.html" class="nav-link">Find My Item</a></li>
+        <li><a href="report-lost.html" class="nav-link">Report Lost</a></li>
+        <li><a href="report-found.html" class="nav-link">Report Found</a></li>
+        <li><a href="ai-assistant.html" class="nav-link">AI Assistant</a></li>
+        <li class="nav-user">
+          <a href="profile.html" class="nav-link">Profile</a>
+        </li>
+        <li class="nav-user nav-admin">
+          <a href="admin.html" class="nav-link active" style="color: var(--danger); font-weight: 700;">Admin</a>
+        </li>
+        <li class="nav-user">
+          <button type="button" class="theme-toggle-btn" aria-label="Toggle theme" title="Toggle theme">
+            <span class="theme-icon-wrap"></span>
+            <span class="theme-toggle-label">Theme</span>
+          </button>
+        </li>
+        <li class="nav-user">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="LostLink.logout()">Logout</button>
+        </li>
+      </ul>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">Menu</button>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top: var(--space-8); padding-bottom: var(--space-16);">
+
+    <!-- Admin Hero Banner -->
+    <section class="admin-hero">
+      <span class="admin-badge">Admin Control Active</span>
+      <h1 style="font-family: var(--font-heading); font-size: var(--text-3xl); font-weight: 800; margin: 0 0 var(--space-2); color: var(--text-primary);">
+        Campus Report Moderation
+      </h1>
+      <p style="color: var(--text-secondary); margin: 0; font-size: var(--text-base); max-width: 680px;">
+        Backend-authorized portal for verified administrators. Permanently remove spam, inappropriate reports, or duplicate submissions with full audit trail logging.
+      </p>
+    </section>
+
+    <!-- Stats Grid -->
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <span class="admin-stat-num" id="statTotalReports">--</span>
+        <span class="admin-stat-label">Total Reports</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-num" id="statLostReports" style="color: var(--accent);">--</span>
+        <span class="admin-stat-label">Lost Reports</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-num" id="statFoundReports" style="color: var(--success);">--</span>
+        <span class="admin-stat-label">Found Reports</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="admin-stat-num" id="statModerationCount" style="color: var(--danger);">--</span>
+        <span class="admin-stat-label">Deleted / Moderated</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-tabs">
+      <button type="button" class="admin-tab-btn active" id="tabReportsBtn" onclick="switchAdminTab('reports')">
+        All Campus Reports
+      </button>
+      <button type="button" class="admin-tab-btn" id="tabLogsBtn" onclick="switchAdminTab('logs')">
+        Moderation Audit Log
+      </button>
+    </div>
+
+    <!-- TAB 1: REPORTS TABLE -->
+    <section id="reportsTabSection">
+      <!-- Toolbar -->
+      <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4); align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; flex: 1; max-width: 600px;">
+          <input 
+            type="text" 
+            id="adminSearchInput" 
+            class="form-input" 
+            placeholder="Search by title, student, or location..." 
+            style="flex: 1; min-width: 220px;"
+            oninput="filterAdminReports()"
+          >
+          <select id="adminTypeFilter" class="form-input" style="width: 140px;" onchange="filterAdminReports()">
+            <option value="">All Types</option>
+            <option value="lost">Lost</option>
+            <option value="found">Found</option>
+          </select>
+          <select id="adminStatusFilter" class="form-input" style="width: 150px;" onchange="filterAdminReports()">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="loadAdminData()">
+          Refresh
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Photo</th>
+              <th>Report Details</th>
+              <th>Type</th>
+              <th>Location & Date</th>
+              <th>Student Author</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminReportsTbody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                Loading campus reports...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: MODERATION AUDIT LOGS -->
+    <section id="logsTabSection" class="hidden">
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Report Title & ID</th>
+              <th>Action</th>
+              <th>Reason</th>
+              <th>Admin UID</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="adminLogsTbody">
+            <tr>
+              <td colspan="6" style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                Loading moderation audit logs...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Deletion Confirmation Modal -->
+  <div id="deleteModal" class="modal-overlay hidden" onclick="if(event.target === this) closeDeleteModal()">
+    <div class="modal-card">
+      <div style="display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4);">
+        <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: rgba(239, 68, 68, 0.15); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; flex-shrink: 0;">
+          &times;
+        </div>
+        <div>
+          <h2 style="font-family: var(--font-heading); font-size: var(--text-lg); font-weight: 700; margin: 0 0 4px; color: var(--text-primary);">
+            Permanently Delete Report
+          </h2>
+          <p style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;">
+            This action cannot be undone. The report and its associated private photo will be permanently purged from the database.
+          </p>
+        </div>
+      </div>
+
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4);">
+        <strong id="modalReportTitle" style="display: block; color: var(--text-primary); font-size: var(--text-sm);"></strong>
+        <span id="modalReportMeta" style="font-size: var(--text-xs); color: var(--text-secondary);"></span>
+      </div>
+
+      <div style="margin-bottom: var(--space-4);">
+        <label for="deleteReasonSelect" class="form-label" style="font-size: var(--text-xs); font-weight: 600; text-transform: uppercase;">
+          Moderation Reason
+        </label>
+        <select id="deleteReasonSelect" class="form-input" style="width: 100%;">
+          <option value="Inappropriate content">Inappropriate content</option>
+          <option value="Spam">Spam</option>
+          <option value="Duplicate">Duplicate submission</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: var(--space-6);">
+        <label for="deleteReasonDetails" class="form-label" style="font-size: var(--text-xs); font-weight: 600; text-transform: uppercase;">
+          Optional Audit Notes
+        </label>
+        <textarea id="deleteReasonDetails" class="form-input" rows="2" placeholder="Describe the violation for audit record..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: var(--space-3);">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" id="confirmDeleteBtn" class="btn btn-danger btn-sm" onclick="executeReportDeletion()">
+          Permanently Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">RetrieVIT</div>
+      <p class="footer-text">Admin Moderation & Campus Safety Portal</p>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="js/utils.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
