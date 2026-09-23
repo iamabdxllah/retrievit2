@@ -10,7 +10,7 @@
     },
     {
       "collectionGroup": "items",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTIONS",
       "fields": [
         { "fieldPath": "types", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
