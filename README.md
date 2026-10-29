@@ -1,8 +1,10 @@
 # 🔗 RetrieVIT — AI-Powered Campus Lost & Found Assistant
 
-> **Lost Something at VIT? Let Gemini AI Suggest the Most Relevant Found Items.**
+> **Lost Something at VIT? Let AI Suggest the Most Relevant Found Items.**
 
 RetrieVIT is an AI course web application designed specifically for the Vellore Institute of Technology (VIT) campus. It bridges the natural language gap between how owners describe their lost items and how finders report found belongings.
+
+Matching can use a local Ollama model to compare lost and found report descriptions and rank likely matches. Set `AI_PROVIDER=ollama`, configure `OLLAMA_BASE_URL` and `OLLAMA_MODEL`, and make sure that model is downloaded in Ollama. Ollama is used for report matching; Gemini remains available for the assistant and photo verification.
 
 ---
 
@@ -87,6 +89,12 @@ NODE_ENV=development
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-1.5-flash
 
+# Optional local Ollama ranking for lost/found reports
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1
+OLLAMA_TIMEOUT_MS=30000
+
 # Firebase Admin SDK (Server)
 FIREBASE_SERVICE_ACCOUNT_PATH=./serviceAccountKey.json
 FIREBASE_STORAGE_BUCKET=your-project.appspot.com
@@ -113,7 +121,7 @@ npm install
 ```
 
 ### 2. Configure Environment
-Copy `.env.example` to `.env` and fill in your Gemini API key and Firebase credentials.
+Copy `.env.example` to `.env` and fill in your Firebase credentials. To use local Ollama matching, install Ollama, run `ollama pull llama3.1`, set `AI_PROVIDER=ollama`, and leave Ollama running while the app server is running. Set `OLLAMA_BASE_URL` if Ollama runs on another host. Gemini can still be configured for assistant and photo features.
 
 ### 3. Seed Campus Sample Data (Optional)
 ```bash

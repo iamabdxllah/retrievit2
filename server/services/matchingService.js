@@ -8,6 +8,7 @@
  */
 
 const geminiService = require('./geminiService');
+const ollamaService = require('./ollamaService');
 const firebaseService = require('./firebaseService');
 const supabaseStorageService = require('./supabaseStorageService');
 
@@ -272,8 +273,23 @@ async function searchByDescription(queryText, options = {}) {
 
   let finalCandidates = deterministicMatches.slice(0, limit);
 
-  // If deterministic matches exist, pass them to AI to refine/rank when available
-  if (geminiService.isAvailable() && deterministicMatches.length > 0) {
+  // Ollama compares the lost report against the active report pool, including
+  // wording variants that did not pass the keyword matcher.
+  if (ollamaService.isAvailable() && activeCandidates.length > 0) {
+    try {
+      const lostQuery = {
+        description: cleanQuery,
+        location: filters.location || searchTokens.locations[0],
+        date: filters.date,
+        color: filters.color || searchTokens.colors[0]
+      };
+      const aiRanked = await ollamaService.rankCandidates(lostQuery, activeCandidates.slice(0, 30));
+      if (Array.isArray(aiRanked)) finalCandidates = aiRanked.slice(0, limit);
+    } catch (aiErr) {
+      console.warn('[MatchingService] Ollama ranking skipped, using deterministic scores:', aiErr.message);
+    }
+  // If deterministic matches exist, pass them to Gemini to refine/rank when available
+  } else if (geminiService.isAvailable() && deterministicMatches.length > 0) {
     try {
       const lostQuery = {
         description: cleanQuery,
@@ -466,6 +482,24 @@ async function findMatchingLostReportsForFoundItem(foundItem) {
         score: scored.score,
         reason: scored.reason
       });
+    }
+  }
+
+  if (ollamaService.isAvailable() && activeLostReports.length > 0) {
+    try {
+      const ranked = await ollamaService.rankCandidates({
+        description: `${foundItem.title || ''} ${foundItem.description}`.trim(),
+        location: foundItem.location, date: foundItem.date, color: foundItem.color
+      }, activeLostReports.slice(0, 30));
+      if (Array.isArray(ranked)) {
+        return ranked.map(item => ({
+          id: item.id, title: item.title, description: item.description,
+          location: item.location, date: item.date, color: item.color,
+          userId: item.userId, score: item.score, reason: item.reason
+        }));
+      }
+    } catch (err) {
+      console.warn('[MatchingService] Ollama bidirectional ranking skipped:', err.message);
     }
   }
 

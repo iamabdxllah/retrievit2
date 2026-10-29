@@ -44,10 +44,16 @@ if (process.env.NODE_ENV !== 'production') {
 app.get('/api/health', (req, res) => {
   const fbService = require('./services/firebaseService');
   const sbStorageService = require('./services/supabaseStorageService');
+  const ollamaService = require('./services/ollamaService');
   res.json({
     status: 'ok',
     service: 'LostLink API',
     version: '2.0.0',
+    ai: {
+      provider: (process.env.AI_PROVIDER || 'gemini').trim().toLowerCase(),
+      ollamaEnabled: ollamaService.isAvailable(),
+      ollamaModel: ollamaService.isAvailable() ? ollamaService.getModel() : null
+    },
     timestamp: new Date().toISOString(),
     firebaseAdmin: {
       isAvailable: fbService.isAvailable,
