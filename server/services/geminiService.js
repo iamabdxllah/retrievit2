@@ -7,6 +7,7 @@
  */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const ollamaService = require('./ollamaService');
 
 let provider = 'none'; // 'gemini' | 'groq' | 'none'
 let genAI = null;
@@ -23,6 +24,13 @@ const GEMINI_FALLBACK_MODELS = [
 
 function initAI() {
   const chosenProvider = (process.env.AI_PROVIDER || '').trim().toLowerCase();
+
+  if (chosenProvider === 'ollama') {
+    provider = 'ollama';
+    isConfigured = ollamaService.isAvailable();
+    console.log(`[AI Service] Initialized with Ollama model: ${ollamaService.getModel()}`);
+    return;
+  }
 
   if ((chosenProvider === 'groq' || !process.env.GEMINI_API_KEY) && process.env.GROQ_API_KEY) {
     provider = 'groq';
@@ -154,6 +162,15 @@ async function runAIPrompt(prompt, systemInstruction = '') {
     }
     messages.push({ role: 'user', content: prompt });
     return callGroqChat(messages, 1000);
+  }
+
+  if (provider === 'ollama') {
+    const messages = [];
+    if (systemInstruction) {
+      messages.push({ role: 'system', content: systemInstruction });
+    }
+    messages.push({ role: 'user', content: prompt });
+    return ollamaService.chat(messages, 1000);
   }
 
   // Gemini
@@ -488,17 +505,18 @@ Strict rules:
 1. Do NOT use any emojis.
 2. NEVER invent or fabricate any found item or database record.
 3. Every found item mentioned MUST come strictly from the "REAL DATABASE RESULTS" section below.
-4. If "REAL DATABASE RESULTS" states no matches exist, clearly and truthfully tell the student that no matching item has been reported yet, and advise them to submit a Lost Report.
-5. If real matches exist, concisely summarize them (mention the item, location, and that they can click the item to see full details).
-6. If the user found an item, guide them to click "Report Found" and mention security counters (e.g. SJT ground floor, TT security desk, Library).
-7. Keep answers concise, clear, and practical.`;
+4. Only apply the no-match guidance when the student is asking about a lost or found item. For general campus questions, answer the question directly using known campus guidance; if unsure, say so.
+5. If an item search has no matches, clearly say that no matching item has been reported yet and advise the student to submit a Lost Report.
+6. If real matches exist, concisely summarize them (mention the item, location, and that they can click the item to see full details).
+7. If the user found an item, guide them to click "Report Found" and mention security counters (e.g. SJT ground floor, TT security desk, Library).
+8. Reply in 1-3 short sentences. Output only the final answer; do not narrate reasoning, repeat instructions, or include a preamble.`;
 
   const userContextPrompt = `Student Message: "${cleanMessage}"
 
 REAL DATABASE RESULTS FOR THIS QUERY:
 ${candidateSummary}
 
-Answer the student clearly according to the rules:`;
+Answer the student directly in 1-3 short sentences. Return only the final answer:`;
 
   try {
     const text = await runAIPrompt(userContextPrompt, systemInstruction);

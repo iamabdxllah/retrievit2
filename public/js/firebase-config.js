@@ -20,7 +20,7 @@ LostLink.initFirebase = async function() {
   try {
     let config = null;
     try {
-      const cached = sessionStorage.getItem('lostlink_fb_config');
+      const cached = sessionStorage.getItem('retrievit_fb_config');
       if (cached) config = JSON.parse(cached);
     } catch (e) {}
 
@@ -43,18 +43,18 @@ LostLink.initFirebase = async function() {
       // Safe client fallback (Firebase client credentials are safe to expose in web frontends)
       if (!config) {
         config = {
-          apiKey: 'AIzaSyDaarUbOPmj0GOXNDmG0eXlPqgSA1g4O1I',
-          authDomain: 'lost-link-62727.firebaseapp.com',
-          projectId: 'lost-link-62727',
-          storageBucket: 'lost-link-62727.firebasestorage.app',
-          messagingSenderId: '306773584089',
-          appId: '1:306773584089:web:45736de1005ececc8af6c8'
+          apiKey: 'AIzaSyD7V87cvQafdO8Z5KIgfLz96rb21pRfeYs',
+          authDomain: 'lostlink-yoink.firebaseapp.com',
+          projectId: 'lostlink-yoink',
+          storageBucket: 'lostlink-yoink.firebasestorage.app',
+          messagingSenderId: '952977264053',
+          appId: '1:952977264053:web:3eb4dcfb70dd8ad5a6ddfc'
         };
       }
 
       if (config && config.apiKey) {
         try {
-          sessionStorage.setItem('lostlink_fb_config', JSON.stringify(config));
+          sessionStorage.setItem('retrievit_fb_config', JSON.stringify(config));
         } catch (e) {}
       }
     }
